@@ -1,0 +1,47 @@
+// Run: vanta /Development/pathfinding.vanta
+// Breadth-first search finds a shortest route through a maze.
+let width = 8
+let height = 6
+let maze = [
+    "........",
+    ".#####..",
+    ".....#..",
+    ".###.#..",
+    "...#....",
+    "........"
+]
+let previous = []
+for let i = 0; i < width * height; i++ { previous.push(-1) }
+let queue = [0]
+let head = 0
+previous[0] = 0
+let goal = width * height - 1
+let dx = [1, 0, -1, 0]
+let dy = [0, 1, 0, -1]
+while head < len(queue) && previous[goal] == -1 {
+    let cell = queue[head]
+    head++
+    let x = cell % width
+    let y = int(cell / width)
+    for let direction = 0; direction < 4; direction++ {
+        let nx = x + dx[direction]
+        let ny = y + dy[direction]
+        if nx >= 0 && nx < width && ny >= 0 && ny < height {
+            let next = ny * width + nx
+            if maze[ny][nx] != "#" && previous[next] == -1 {
+                previous[next] = cell
+                queue.push(next)
+            }
+        }
+    }
+}
+assert(previous[goal] != -1)
+let route = []
+let current = goal
+while current != 0 { route.push(current); current = previous[current] }
+route.push(0)
+println("Shortest route takes ", len(route) - 1, " steps:")
+for let i = len(route) - 1; i >= 0; i-- {
+    println("(", route[i] % width, ", ", int(route[i] / width), ")")
+}
+assert(len(route) - 1 == 12)

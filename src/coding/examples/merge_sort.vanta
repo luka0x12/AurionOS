@@ -1,0 +1,28 @@
+// Run: vanta /Development/merge_sort.vanta
+// A stable recursive merge sort: O(n log n) comparisons.
+fn merge_sort(values) {
+    if len(values) <= 1 { return values }
+    let middle = len(values) / 2
+    let left = []
+    let right = []
+    for let i = 0; i < len(values); i++ {
+        if i < middle { left.push(values[i]) } else { right.push(values[i]) }
+    }
+    left = merge_sort(left)
+    right = merge_sort(right)
+    let result = []
+    let a = 0
+    let b = 0
+    while a < len(left) && b < len(right) {
+        if left[a] <= right[b] { result.push(left[a]); a++ } else { result.push(right[b]); b++ }
+    }
+    while a < len(left) { result.push(left[a]); a++ }
+    while b < len(right) { result.push(right[b]); b++ }
+    return result
+}
+let input = [42, -7, 13, 0, 42, 8, 3, 99, -20, 5, 1]
+let sorted = merge_sort(input)
+println("Input:  ", input)
+println("Sorted: ", sorted)
+for let i = 1; i < len(sorted); i++ { assert(sorted[i - 1] <= sorted[i]) }
+assert(len(sorted) == len(input))

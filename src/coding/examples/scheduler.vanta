@@ -1,0 +1,28 @@
+// Run: vanta /Development/scheduler.vanta
+// Simulate round-robin CPU scheduling and measure waiting time.
+let names = ["editor", "audio", "compile", "network"]
+let burst = [7, 3, 11, 5]
+let remaining = [7, 3, 11, 5]
+let completed = [0, 0, 0, 0]
+let quantum = 2
+let clock = 0
+let finished = 0
+while finished < len(names) {
+    for let job = 0; job < len(names); job++ {
+        if remaining[job] > 0 {
+            let slice = min(quantum, remaining[job])
+            println("t=", clock, " run ", names[job], " for ", slice)
+            clock += slice
+            remaining[job] -= slice
+            if remaining[job] == 0 { completed[job] = clock; finished++ }
+        }
+    }
+}
+let waiting = 0
+for let job = 0; job < len(names); job++ {
+    let wait = completed[job] - burst[job]
+    waiting += wait
+    println(names[job], ": finish=", completed[job], " wait=", wait)
+}
+println("Average waiting time: ", waiting * 1.0 / len(names))
+assert(clock == 26)

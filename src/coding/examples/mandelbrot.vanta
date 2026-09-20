@@ -1,0 +1,25 @@
+// Run: vanta /Development/mandelbrot.vanta
+// Complex numbers are represented by separate real/imaginary parts.
+let width = 64
+let height = 22
+let limit = 40
+let shades = " .:-=+*#%@"
+for let py = 0; py < height; py++ {
+    let line = ""
+    for let px = 0; px < width; px++ {
+        let cr = -2.1 + px * 3.0 / (width - 1)
+        let ci = -1.1 + py * 2.2 / (height - 1)
+        let zr = 0.0
+        let zi = 0.0
+        let iteration = 0
+        while zr * zr + zi * zi <= 4.0 && iteration < limit {
+            let next_real = zr * zr - zi * zi + cr
+            zi = 2.0 * zr * zi + ci
+            zr = next_real
+            iteration++
+        }
+        let shade = int(iteration * (len(shades) - 1) / limit)
+        line += shades[shade]
+    }
+    println(line)
+}

@@ -1,0 +1,30 @@
+// Run: vanta /Development/linear_solver.vanta
+// Gauss-Jordan elimination with partial pivoting solves A*x = b.
+// Rows below contain the coefficients followed by the right-hand side.
+let rows = [[2.0, 1.0, -1.0, 8.0], [-3.0, -1.0, 2.0, -11.0], [-2.0, 1.0, 2.0, -3.0]]
+let n = len(rows)
+for let col = 0; col < n; col++ {
+    let pivot = col
+    for let row = col + 1; row < n; row++ {
+        if abs(rows[row][col]) > abs(rows[pivot][col]) { pivot = row }
+    }
+    assert(abs(rows[pivot][col]) > 0.000001)
+    let swap = rows[col]
+    rows[col] = rows[pivot]
+    rows[pivot] = swap
+    let divisor = rows[col][col]
+    for let j = col; j <= n; j++ { rows[col][j] = rows[col][j] / divisor }
+    for let row = 0; row < n; row++ {
+        if row != col {
+            let factor = rows[row][col]
+            for let j = col; j <= n; j++ {
+                rows[row][j] = rows[row][j] - factor * rows[col][j]
+            }
+        }
+    }
+}
+// This system has an integer solution; round only for display.
+for let i = 0; i < n; i++ { println("x[", i, "] = ", int(round(rows[i][n]))) }
+assert(abs(rows[0][n] - 2.0) < 0.000001)
+assert(abs(rows[1][n] - 3.0) < 0.000001)
+assert(abs(rows[2][n] + 1.0) < 0.000001)

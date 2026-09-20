@@ -1,0 +1,20 @@
+// Run: vanta /Development/collections.vanta
+// Aggregate records into a map, then calculate a weighted total.
+let orders = [
+    {item: "coffee", quantity: 3, cents: 180},
+    {item: "tea", quantity: 2, cents: 140},
+    {item: "coffee", quantity: 4, cents: 180},
+    {item: "cake", quantity: 2, cents: 320}
+]
+let counts = {coffee: 0, tea: 0, cake: 0}
+let total = 0
+for let i = 0; i < len(orders); i++ {
+    let order = orders[i]
+    let item = order.item
+    counts[item] = counts[item] + order.quantity
+    total += order.quantity * order.cents
+}
+println("Units: ", counts)
+println("Revenue in cents: ", total)
+assert(counts.coffee == 7)
+assert(total == 2180)
