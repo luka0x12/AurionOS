@@ -75,6 +75,16 @@ LIBM    := $(shell $(GCC) -m32 -print-file-name=libm.a)
 ifeq ($(LIBGCC),)
     LIBGCC := /usr/lib/gcc/x86_64-linux-gnu/13/32/libgcc.a
 endif
+# -print-libgcc-file-name silently falls back to the host x86_64 archive when
+# the 32-bit multilib variant is not installed (gcc-multilib missing). Linking
+# that into a -m32 kernel resolves nothing and would fail with an architecture
+# mismatch if a member were ever pulled in, so drop it when positively
+# identified; src/core/libgcc_stubs.c supplies the integer helpers instead.
+LIBGCC_IS_X86_64 := $(shell m=`ar t "$(LIBGCC)" 2>/dev/null | head -n1`; \
+    if [ -n "$$m" ]; then ar p "$(LIBGCC)" "$$m" 2>/dev/null | file - 2>/dev/null | grep -q 'ELF 64-bit' && echo yes; fi)
+ifeq ($(LIBGCC_IS_X86_64),yes)
+    LIBGCC :=
+endif
 ifeq ($(LIBM),)
     LIBM := /usr/lib/i386-linux-gnu/libm.a
 endif
@@ -183,6 +193,7 @@ C_SOURCES  := $(SRC_DIR)/drivers/vbe_graphics.c \
               $(SRC_DIR)/core/reinstall.c \
               $(SRC_DIR)/core/firmware_loader.c \
               $(SRC_DIR)/core/libm_stubs.c \
+              $(SRC_DIR)/core/libgcc_stubs.c \
               $(SRC_DIR)/drivers/vga_fallback.c \
                $(SRC_DIR)/fs/fat32.c \
                $(SRC_DIR)/fs/iso9660.c \
