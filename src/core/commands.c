@@ -1770,6 +1770,7 @@ char keyboard_remap(char c)
 /* No-op command - handles # character and empty commands */
 static int cmd_noop(const char *args)
 {
+  (void)args;
   return 0; /* Silent success - do nothing */
 }
 
@@ -2155,7 +2156,7 @@ static int cmd_del(const char *args)
     if (str_cmp(name, "-rf") == 0)
     {
       char next[64];
-      const char *tmp = get_token(args, next, 64);
+      get_token(args, next, 64);
       if (next[0] == '/' && next[1] == '\0')
       {
         puts("Nice Try, but AurionOS protects itself (and you too :D)\n");
@@ -6671,27 +6672,6 @@ static float mage_cos(float x) {
     return mage_sin(x + 1.57079632f);
 }
 
-/* Freestanding float sqrt. The seed comes from the exponent-halving bit
- * trick (a float's exponent is halved by a right shift plus a fixed bias
- * correction), then three Newton-Raphson steps refine it. Newton squares
- * the relative error every pass, so a seed good to a few percent lands past
- * float precision. No libm, no loops, safe on soft-float builds. */
-static float mage_sqrt(float x) {
-    union {
-        float f;
-        uint32_t u;
-    } bits;
-    float r;
-    if (x <= 0.0f) return 0.0f;
-    bits.f = x;
-    bits.u = (bits.u >> 1) + 0x1FC00000u;
-    r = bits.f;
-    r = 0.5f * (r + x / r);
-    r = 0.5f * (r + x / r);
-    r = 0.5f * (r + x / r);
-    return r;
-}
-
 /* Helper: hash-based value noise for nebula
  * Kept in unsigned math: x * 374761393 leaves the signed int range as soon
  * as x reaches 6, and signed overflow is undefined behaviour in C. */
@@ -6700,44 +6680,6 @@ static float mage_hash2f(int x, int y) {
     h = (h ^ (h >> 13)) * 1274126177u;
     h = h ^ (h >> 16);
     return (float)(h & 0xFFFFFF) / 16777216.0f;
-}
-
-static float mage_smoothstep(float edge0, float edge1, float x) {
-    float t = (x - edge0) / (edge1 - edge0);
-    if (t < 0.0f) t = 0.0f;
-    if (t > 1.0f) t = 1.0f;
-    return t * t * (3.0f - 2.0f * t);
-}
-
-static float mage_noise2d(float x, float y) {
-    int ix = (int)x;
-    int iy = (int)y;
-    float fx = x - (float)ix;
-    float fy = y - (float)iy;
-
-    float v00 = mage_hash2f(ix, iy);
-    float v10 = mage_hash2f(ix + 1, iy);
-    float v01 = mage_hash2f(ix, iy + 1);
-    float v11 = mage_hash2f(ix + 1, iy + 1);
-
-    float sx = fx * fx * (3.0f - 2.0f * fx);
-    float sy = fy * fy * (3.0f - 2.0f * fy);
-
-    float i0 = v00 + sx * (v10 - v00);
-    float i1 = v01 + sx * (v11 - v01);
-    return i0 + sy * (i1 - i0);
-}
-
-static float mage_fbm(float x, float y, int octaves) {
-    float value = 0.0f;
-    float amplitude = 0.5f;
-    float frequency = 1.0f;
-    for (int i = 0; i < octaves; i++) {
-        value += amplitude * mage_noise2d(x * frequency, y * frequency);
-        amplitude *= 0.5f;
-        frequency *= 2.0f;
-    }
-    return value;
 }
 
 static float mage_hash2f_nosafe(int x, int y) {
@@ -7062,9 +7004,6 @@ static int cmd_mage7968(const char *args) {
             bg += (int)(band * 5);
             bb += (int)(band * 40);
 
-            float dx = xn - 0.5f;
-            float dy = yn - 0.5f;
-            
             float star_h = mage_hash2f(x * 17 + 3, y * 31 + 7);
             if (star_h > 0.990f) {
                 int star_bright = (int)((star_h - 0.990f) * 25500.0f);
@@ -7073,9 +7012,12 @@ static int cmd_mage7968(const char *args) {
                 bb += star_bright + 30;
             }
 
-            if (br < 0) br = 0; if (br > 255) br = 255;
-            if (bg < 0) bg = 0; if (bg > 255) bg = 255;
-            if (bb < 0) bb = 0; if (bb > 255) bb = 255;
+            if (br < 0) br = 0;
+            if (br > 255) br = 255;
+            if (bg < 0) bg = 0;
+            if (bg > 255) bg = 255;
+            if (bb < 0) bb = 0;
+            if (bb > 255) bb = 255;
             
             row[x] = rgb((uint8_t)br, (uint8_t)bg, (uint8_t)bb);
         }
@@ -7316,11 +7258,6 @@ static int cmd_mage7968(const char *args) {
                     int f1 = cube_faces[sorted_faces[fi].f][1];
                     int f2 = cube_faces[sorted_faces[fi].f][2];
                     float avg_z = sorted_faces[fi].z / 3.0f;
-                    float e1x = proj_x[f1] - proj_x[f0];
-                    float e1y = proj_y[f1] - proj_y[f0];
-                    float e2x = proj_x[f2] - proj_x[f0];
-                    float e2y = proj_y[f2] - proj_y[f0];
-                    float cross = e1x * e2y - e1y * e2x;
                     float fzn = (avg_z + 150.0f * us) / (300.0f * us);
                     if (fzn < 0.0f) fzn = 0.0f;
                     if (fzn > 1.0f) fzn = 1.0f;
@@ -7444,6 +7381,9 @@ static int cmd_mage7968(const char *args) {
     kfree(half_buf);
     return 0;
 }
+/* 3D demo lives in src/apps/app_3d_demo.c */
+extern void app_3d_demo_create(void);
+
 static int cmd_auriongl(const char *args) {
     (void)args;
 

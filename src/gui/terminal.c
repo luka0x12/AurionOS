@@ -118,15 +118,6 @@ static void term_putchar(TerminalState *ts, char c)
     }
 }
 
-static void term_puts(TerminalState *ts, const char *s)
-{
-    while (*s)
-    {
-        term_putchar(ts, *s);
-        s++;
-    }
-}
-
 static void term_puts_color(TerminalState *ts, const char *s, uint32_t color)
 {
     while (*s)
@@ -156,34 +147,6 @@ static void term_show_prompt(TerminalState *ts)
     term_puts_color(ts, "@aurionos ", 0xFF4ADE80); /* Same color for host */
     term_puts_color(ts, current_dir, 0xFF818CF8);  /* Light Blue path */
     term_puts_color(ts, " > ", 0xFFF87171);       /* Rose separator */
-}
-
-static int term_strlen(const char *s)
-{
-    int l = 0;
-    while (s[l])
-        l++;
-    return l;
-}
-
-static void term_strupr(char *s)
-{
-    while (*s)
-    {
-        if (*s >= 'a' && *s <= 'z')
-            *s -= 32;
-        s++;
-    }
-}
-
-static int term_strcmp(const char *a, const char *b)
-{
-    while (*a && *b && *a == *b)
-    {
-        a++;
-        b++;
-    }
-    return *a - *b;
 }
 
 static void term_init(TerminalState *ts)
@@ -382,7 +345,7 @@ static void terminal_on_draw(Window *win)
     /* Scrollback indicator */
     if (ts->scroll_offset > 0)
     {
-        wm_draw_string(win, cw - 80, 4, (const uint8_t *)"[SCROLL]",
+        wm_draw_string(win, cw - 80, 4, "[SCROLL]",
                        0xFF818CF8, 0xFF000000);
     }
 
@@ -669,7 +632,6 @@ static void terminal_on_mouse(Window *win, int lx, int ly, bool left, bool right
     prev_left  = left;
     prev_right = right;
 
-    int cw = wm_client_w(win);
     int ch = wm_client_h(win);
     int visible_rows = (ch - 4) / 14;
     int bottom_row = ts->cursor_row;
@@ -715,8 +677,10 @@ static void terminal_on_mouse(Window *win, int lx, int ly, bool left, bool right
     if (left) {
         int r = start_row + (ly - 4) / 14;
         int c = (lx - 4) / 8;
-        if (r < 0) r = 0; if (r >= TERM_ROWS) r = TERM_ROWS - 1;
-        if (c < 0) c = 0; if (c >= TERM_COLS) c = TERM_COLS - 1;
+        if (r < 0) r = 0;
+        if (r >= TERM_ROWS) r = TERM_ROWS - 1;
+        if (c < 0) c = 0;
+        if (c >= TERM_COLS) c = TERM_COLS - 1;
 
         if (lclick) {
             ts->sel_start_row = r;
